@@ -7,4 +7,5 @@ public class PostProcessRequest {
     private String paymentId;
     private String orderId;
     private int amount;
+    private long userId;
 }

@@ -44,7 +44,7 @@ public class PaymentController {
     public ResponseEntity<PreprocessResponse> preprocess(@RequestBody PreprocessRequest preprocessRequest) throws Exception {
         // 데이터 저장
 
-        return ResponseEntity.ok(new PreprocessResponse(preprocessRequest.getOrderId(), preprocessRequest.getAmount()));
+        return ResponseEntity.ok(new PreprocessResponse(preprocessRequest.getOrderId(), preprocessRequest.getAmount(), preprocessRequest.getUserId()));
     }
 
     @ResponseBody
@@ -52,7 +52,7 @@ public class PaymentController {
     public ResponseEntity<PostProcessResponse> postprocess(@RequestBody PostProcessRequest postProcessRequest) throws Exception {
         // 데이터 저장
 
-        return ResponseEntity.ok(new PostProcessResponse(postProcessRequest.getPaymentId(), postProcessRequest.getOrderId(), postProcessRequest.getAmount()));
+        return ResponseEntity.ok(new PostProcessResponse(postProcessRequest.getPaymentId(), postProcessRequest.getOrderId(), postProcessRequest.getAmount(), postProcessRequest.getUserId()));
     }
 
 

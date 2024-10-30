@@ -1,5 +1,9 @@
-package com.sparta.nugulpayment.payment.escrow.controller;
+package com.sparta.nugulpayment.payment.controller;
 
+import com.sparta.nugulpayment.payment.dto.request.PostProcessRequest;
+import com.sparta.nugulpayment.payment.dto.request.PreprocessRequest;
+import com.sparta.nugulpayment.payment.dto.response.PostProcessResponse;
+import com.sparta.nugulpayment.payment.dto.response.PreprocessResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -9,10 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -40,6 +41,23 @@ public class PaymentController {
         int statusCode = response.containsKey("error") ? 400 : 200;
         return ResponseEntity.status(statusCode).body(response);
     }
+
+    @ResponseBody
+    @PostMapping("/preprocess")
+    public ResponseEntity<PreprocessResponse> preprocess(@RequestBody PreprocessRequest preprocessRequest) throws Exception {
+        // 데이터 저장
+
+        return ResponseEntity.ok(new PreprocessResponse(preprocessRequest.getOrderId(), preprocessRequest.getAmount()));
+    }
+
+    @ResponseBody
+    @PostMapping("/postprocess")
+    public ResponseEntity<PostProcessResponse> postprocess(@RequestBody PostProcessRequest postProcessRequest) throws Exception {
+        // 데이터 저장
+
+        return ResponseEntity.ok(new PostProcessResponse(postProcessRequest.getPaymentId(), postProcessRequest.getOrderId(), postProcessRequest.getAmount()));
+    }
+
 
     @RequestMapping(value = "/confirm-billing")
     public ResponseEntity<JSONObject> confirmBilling(@RequestBody String jsonBody) throws Exception {

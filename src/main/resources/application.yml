@@ -13,4 +13,3 @@ jwt:
     
 client:
   id: ${CLIENT_ID}
-

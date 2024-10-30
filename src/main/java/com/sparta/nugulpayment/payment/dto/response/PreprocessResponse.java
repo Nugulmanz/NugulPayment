@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class PreprocessResponse {
     private String orderId;
     private int amount;
+    private long userId;
 }

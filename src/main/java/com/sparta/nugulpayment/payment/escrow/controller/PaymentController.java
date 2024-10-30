@@ -30,9 +30,12 @@ public class PaymentController {
     private static final String API_SECRET_KEY = "test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R";
     private final Map<String, String> billingKeyMap = new HashMap<>();
 
+    // 상품 데이터 저장 api
+
     @RequestMapping(value = {"/confirm/widget", "/confirm/payment"})
     public ResponseEntity<JSONObject> confirmPayment(HttpServletRequest request, @RequestBody String jsonBody) throws Exception {
         String secretKey = request.getRequestURI().contains("/confirm/payment") ? API_SECRET_KEY : WIDGET_SECRET_KEY;
+        // 여기서 토스 결제하기 전에 너굴 티켓이 저장하라고 한 정보랑, 지금 결제 과정 다 완료해서 들어온 값이랑 비교해서 맞으면 밑으로 가고 아니면 팅겨주기!
         JSONObject response = sendRequest(parseRequestData(jsonBody), secretKey, "https://api.tosspayments.com/v1/payments/confirm");
         int statusCode = response.containsKey("error") ? 400 : 200;
         return ResponseEntity.status(statusCode).body(response);

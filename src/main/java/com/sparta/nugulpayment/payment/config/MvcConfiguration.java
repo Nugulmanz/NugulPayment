@@ -1,4 +1,4 @@
-package com.sparta.nugulpayment.payment.escrow.config;
+package com.sparta.nugulpayment.payment.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.CacheControl;

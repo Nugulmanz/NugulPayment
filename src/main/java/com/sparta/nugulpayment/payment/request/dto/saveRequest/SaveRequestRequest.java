@@ -5,6 +5,5 @@ import lombok.Getter;
 @Getter
 public class SaveRequestRequest {
     private String orderId;
-    private String orderName;
     private int amount;
 }

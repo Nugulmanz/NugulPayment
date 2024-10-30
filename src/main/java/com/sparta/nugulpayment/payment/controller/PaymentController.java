@@ -42,13 +42,13 @@ public class PaymentController {
         return ResponseEntity.status(statusCode).body(response);
     }
 
-    @ResponseBody
-    @PostMapping("/preprocess")
-    public ResponseEntity<PreprocessResponse> preprocess(@RequestBody PreprocessRequest preprocessRequest) throws Exception {
-        // 데이터 저장
-
-        return ResponseEntity.ok(new PreprocessResponse(preprocessRequest.getOrderId(), preprocessRequest.getAmount()));
-    }
+//    @ResponseBody
+//    @PostMapping("/preprocess")
+//    public ResponseEntity<PreprocessResponse> preprocess(@RequestBody PreprocessRequest preprocessRequest) throws Exception {
+//        // 데이터 저장
+//
+//        return ResponseEntity.ok(new PreprocessResponse(preprocessRequest.getOrderId(), preprocessRequest.getAmount()));
+//    }
 
     @ResponseBody
     @PostMapping("/postprocess")

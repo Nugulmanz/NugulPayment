@@ -14,12 +14,10 @@ public class Request extends Timestamped {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long request_id;
     private String orderId;
-    private String orderName;
     private int amount;
 
     public Request(SaveRequestRequest reqDto){
         this.orderId = reqDto.getOrderId();
-        this.orderName = reqDto.getOrderName();
         this.amount = reqDto.getAmount();
     }
 }

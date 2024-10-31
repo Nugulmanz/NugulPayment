@@ -13,16 +13,12 @@ import org.springframework.web.bind.annotation.*;
 public class RequestController {
     private final RequestService requestService;
 
-    public void saveRequest(@RequestBody SaveRequestRequest reqDto){
-        requestService.saveRequest(reqDto);
-    }
-
     @ResponseBody
     @PostMapping("/preprocess")
     public ResponseEntity<PreprocessResponse> preprocess(@RequestBody SaveRequestRequest reqDto) throws Exception {
         // 데이터 저장
         requestService.saveRequest(reqDto);
 
-        return ResponseEntity.ok(new PreprocessResponse(reqDto.getOrderId(), reqDto.getAmount()));
+        return ResponseEntity.ok(new PreprocessResponse(reqDto.getOrderId(), reqDto.getAmount(), reqDto.getUserId()));
     }
 }

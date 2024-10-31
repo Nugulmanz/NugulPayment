@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PreprocessResponse {
     private String orderId;
-    private int amount;
+    private Long amount;
     private long userId;
 }

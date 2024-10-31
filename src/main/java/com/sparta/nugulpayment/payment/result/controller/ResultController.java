@@ -10,4 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ResultController {
     private final ResultService resultService;
+
+    // 결제 결과 조회 api
 }

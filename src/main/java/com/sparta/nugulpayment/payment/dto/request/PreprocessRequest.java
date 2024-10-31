@@ -5,6 +5,6 @@ import lombok.Getter;
 @Getter
 public class PreprocessRequest {
     private String orderId;
-    private int amount;
+    private long amount;
     private long userId;
 }

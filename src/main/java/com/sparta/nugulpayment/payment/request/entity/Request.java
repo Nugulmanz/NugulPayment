@@ -14,7 +14,7 @@ public class Request extends Timestamped {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long request_id;
     private String orderId;
-    private int amount;
+    private long amount;
 
     public Request(SaveRequestRequest reqDto){
         this.orderId = reqDto.getOrderId();

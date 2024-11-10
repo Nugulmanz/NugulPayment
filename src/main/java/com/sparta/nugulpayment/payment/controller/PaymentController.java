@@ -14,6 +14,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,14 +34,14 @@ public class PaymentController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final String WIDGET_SECRET_KEY = "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
-    private static final String API_SECRET_KEY = "test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R";
+    @Value("${toss.key.secret-key}")
+    private static String API_SECRET_KEY;
     private final Map<String, String> billingKeyMap = new HashMap<>();
     private final RequestService requestService;
     private final ResultService resultService;
 
 
-    // 상품 데이터 저장 api
-
+    // 결제 승인 API
     @RequestMapping(value = {"/confirm/widget", "/confirm/payment"})
     public ResponseEntity<JSONObject> confirmPayment(HttpServletRequest request, @RequestBody PostProcessRequest postProcessRequest) throws Exception {
         String secretKey = request.getRequestURI().contains("/confirm/payment") ? API_SECRET_KEY : WIDGET_SECRET_KEY;

@@ -20,3 +20,22 @@ spring:
         show_sql: true
         format_sql: true
         use_sql_comments: true
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${SQS_ACCESS_KEY}
+      secret-key: ${SQS_SECRET_KEY}
+    region:
+      static: ${SQS_REGION}
+    stack:
+      auto: false
+
+    sqs:
+      queue:
+        name: NugulPayments.fifo
+        url: ${SQS_PAYMENTS_URL}
+
+toss:
+  key:
+    secret-key: ${TOSS_SECRET_KEY}

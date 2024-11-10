@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class PostProcessRequest {
-    private String paymentId;
+    private String paymentKey;
     private String orderId;
     private int amount;
     private long userId;

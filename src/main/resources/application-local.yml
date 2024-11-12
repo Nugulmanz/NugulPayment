@@ -5,12 +5,6 @@ spring:
     password: ${LOCAL_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 5MB
-      max-request-size: 5MB
-
   jpa:
     hibernate:
       ddl-auto: update
@@ -21,21 +15,6 @@ spring:
         format_sql: true
         use_sql_comments: true
 
-cloud:
-  aws:
-    credentials:
-      access-key: ${SQS_ACCESS_KEY}
-      secret-key: ${SQS_SECRET_KEY}
-    region:
-      static: ${SQS_REGION}
-    stack:
-      auto: false
-
-    sqs:
-      queue:
-        name: NugulPayments.fifo
-        url: ${SQS_PAYMENTS_URL}
-
-toss:
-  key:
-    secret-key: ${TOSS_SECRET_KEY}
+---
+server:
+  port: 8081

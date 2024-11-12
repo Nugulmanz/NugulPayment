@@ -1,15 +1,20 @@
 package com.sparta.nugulpayment.payment.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.nugulpayment.payment.dto.request.PostProcessRequest;
 import com.sparta.nugulpayment.payment.dto.request.PreprocessRequest;
 import com.sparta.nugulpayment.payment.dto.response.PostProcessResponse;
 import com.sparta.nugulpayment.payment.dto.response.PreprocessResponse;
+import com.sparta.nugulpayment.payment.request.service.RequestService;
+import com.sparta.nugulpayment.payment.result.service.ResultService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,37 +29,33 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Controller
+@RequiredArgsConstructor
 public class PaymentController {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final String WIDGET_SECRET_KEY = "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
-    private static final String API_SECRET_KEY = "test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R";
+    @Value("${toss.key.secret-key}")
+    private static String API_SECRET_KEY;
     private final Map<String, String> billingKeyMap = new HashMap<>();
+    private final RequestService requestService;
+    private final ResultService resultService;
 
+
+    // 결제 승인 API
     @RequestMapping(value = {"/confirm/widget", "/confirm/payment"})
-    public ResponseEntity<JSONObject> confirmPayment(HttpServletRequest request, @RequestBody String jsonBody) throws Exception {
+    public ResponseEntity<JSONObject> confirmPayment(HttpServletRequest request, @RequestBody PostProcessRequest postProcessRequest) throws Exception {
         String secretKey = request.getRequestURI().contains("/confirm/payment") ? API_SECRET_KEY : WIDGET_SECRET_KEY;
-        JSONObject response = sendRequest(parseRequestData(jsonBody), secretKey, "https://api.tosspayments.com/v1/payments/confirm");
+
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonString = mapper.writeValueAsString(postProcessRequest);
+
+        requestService.check(postProcessRequest);
+        resultService.save(postProcessRequest);
+
+        JSONObject response = sendRequest(parseRequestData(jsonString), secretKey, "https://api.tosspayments.com/v1/payments/confirm");
         int statusCode = response.containsKey("error") ? 400 : 200;
         return ResponseEntity.status(statusCode).body(response);
     }
-
-    @ResponseBody
-    @PostMapping("/preprocess")
-    public ResponseEntity<PreprocessResponse> preprocess(@RequestBody PreprocessRequest preprocessRequest) throws Exception {
-        // 데이터 저장
-
-        return ResponseEntity.ok(new PreprocessResponse(preprocessRequest.getOrderId(), preprocessRequest.getAmount(), preprocessRequest.getUserId()));
-    }
-
-    @ResponseBody
-    @PostMapping("/postprocess")
-    public ResponseEntity<PostProcessResponse> postprocess(@RequestBody PostProcessRequest postProcessRequest) throws Exception {
-        // 데이터 저장
-
-        return ResponseEntity.ok(new PostProcessResponse(postProcessRequest.getPaymentId(), postProcessRequest.getOrderId(), postProcessRequest.getAmount(), postProcessRequest.getUserId()));
-    }
-
 
     @RequestMapping(value = "/confirm-billing")
     public ResponseEntity<JSONObject> confirmBilling(@RequestBody String jsonBody) throws Exception {

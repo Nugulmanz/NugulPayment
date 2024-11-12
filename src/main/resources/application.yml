@@ -1,8 +1,15 @@
+server:
+  port: 8081
+
 spring:
   profiles:
     active: local
   application:
     name: nugul-ticket
 
-server:
-  port: 8081
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
+    
+client:
+  id: ${CLIENT_ID}

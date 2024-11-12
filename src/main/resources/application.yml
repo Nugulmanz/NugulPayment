@@ -4,5 +4,28 @@ spring:
   application:
     name: nugul-ticket
 
-server:
-  port: 8081
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
+    
+client:
+  id: ${CLIENT_ID}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${SQS_ACCESS_KEY}
+      secret-key: ${SQS_SECRET_KEY}
+    region:
+      static: ${SQS_REGION}
+    stack:
+      auto: false
+
+    sqs:
+      queue:
+        name: NugulPayments.fifo
+        url: ${SQS_PAYMENTS_URL}
+
+toss:
+  key:
+    secret-key: ${TOSS_SECRET_KEY}

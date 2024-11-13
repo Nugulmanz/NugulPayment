@@ -1,21 +1,21 @@
 package com.sparta.nugulpayment.payment.sqs;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.nugulpayment.config.AwsSqsConfig;
+import com.sparta.nugulpayment.config.SQSProtocol;
 import com.sparta.nugulpayment.payment.request.service.RequestService;
-import com.sparta.nugulpayment.payment.test.TestDto;
+import com.sparta.nugulpayment.payment.sqs.dto.SQSApprovePayment;
+import com.sparta.nugulpayment.payment.sqs.dto.SQSPreOrder;
+import com.sparta.nugulpayment.payment.sqs.dto.SQSSuccessPayment;
+import com.sparta.nugulpayment.payment.sqs.util.SqsUtility;
 import com.sparta.nugulpayment.payment.toss.TossService;
 import com.sparta.nugulpayment.sns.service.SnsService;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.sqs.model.DeleteMessageResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +23,8 @@ public class SqsService {
     private final RequestService requestService;
     private final TossService tossService;
     private final AwsSqsConfig awsSqsConfig;
-    private final String INIT_REQUEST = "initRequest";
-    private final String CONFIRM_REQUEST = "confirmRequest";
     private final SnsService snsService;
+    private final SqsUtility sqsUtility;
 
     /**
      * 주문과 관련된 정보 전달(type=initRequest : 최초 결제 요청 데이터 저장
@@ -38,11 +37,36 @@ public class SqsService {
     @SqsListener(value = "${cloud.aws.sqs.queue.name}")
     public void receiveMessage(Message message) throws Exception {
         System.out.println(message);
+        Map<String ,MessageAttributeValue> messageAttribute = sqsUtility.parseMessage(message);
+        final String type = sqsUtility.getType(messageAttribute);
 
-        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        TestDto testDto = mapper.readValue(message.body(), TestDto.class);
+        switch (type) {
+            case SQSProtocol.TYPE_APPROVE_PAYMENT :
+                SQSApprovePayment approvePaymentDto = new SQSApprovePayment();
+                approvePaymentDto.fromSQSAttributes(messageAttribute);
 
-        Map<String, software.amazon.awssdk.services.sqs.model.MessageAttributeValue> messageAttribute = message.messageAttributes();
+
+                // 결제 승인 요청 전송
+
+                // 실패 시
+                approvePaymentDto.setTryCount(approvePaymentDto.getTryCount() + 1);
+                snsService.publishToPaymentTopic(approvePaymentDto.toSNSAttributes());
+                break;
+
+            case SQSProtocol.TYPE_PRE_ORDER:
+                SQSPreOrder preOrderDto = new SQSPreOrder();
+                preOrderDto.fromSQSAttributes(messageAttribute);
+                break;
+        }
+
+        // 이 코드들을 쓰면 성공 처리가 가능
+        SQSSuccessPayment sqsSuccessPayment = new SQSSuccessPayment(
+                SQSProtocol.TYPE_SUCCESS_PAYMENT,
+                1L
+        );
+
+        Map<String, software.amazon.awssdk.services.sns.model.MessageAttributeValue> snsAttribute = sqsSuccessPayment.toSNSAttributes();
+        snsService.publishToTicketTopic(snsAttribute);
 
 //        switch (sqsDto.getType()) {
 //            case INIT_REQUEST : // 주문과 관련된 정보 전달
@@ -85,7 +109,7 @@ public class SqsService {
 //                // 타임아웃, 몇번 시도할 것인지? 정하면 될 듯
 //                // 리트라이는 3번까지 하기로 결정하고 4번쨰에는 결제 취소 요청하기(티켓서버 롤백)
 //                // 타임아웃 하는 코드 알아보기
-                    snsService.publishToPaymentTopic(convertSqsAttributesToSnsAttributes(message.messageAttributes()));
+                    //snsService.publishToPaymentTopic(convertSqsAttributesToSnsAttributes(message.messageAttributes()));
 //
 //
 //                // 로직 성공 메세지 전송 sms
@@ -95,35 +119,7 @@ public class SqsService {
 //
 //        }
 
-        CompletableFuture<DeleteMessageResponse> response = awsSqsConfig.getSqsAsyncClient().deleteMessage(deleteMessageRequest ->
-                deleteMessageRequest.queueUrl("https://sqs.ap-northeast-2.amazonaws.com/122610500734/NugulPayments.fifo")
-                        .receiptHandle(message.receiptHandle())).whenComplete(((deleteMessageResponse, throwable) -> {
-            if (throwable != null) {
-                System.out.println(throwable.getMessage());
-            } else {
-                System.out.println(deleteMessageResponse.sdkHttpResponse().isSuccessful());
-            };
-        }));
+        sqsUtility.deleteMessage(awsSqsConfig.getSqsAsyncClient(), awsSqsConfig.getSqsQueueUrl(), message);
         return;
-    }
-
-    public static Map<String, software.amazon.awssdk.services.sns.model.MessageAttributeValue> convertSqsAttributesToSnsAttributes(Map<String, software.amazon.awssdk.services.sqs.model.MessageAttributeValue> sqsAttributes) {
-        Map<String, software.amazon.awssdk.services.sns.model.MessageAttributeValue> snsAttributes = new HashMap<>();
-
-        for (Map.Entry<String, software.amazon.awssdk.services.sqs.model.MessageAttributeValue> entry : sqsAttributes.entrySet()) {
-            String key = entry.getKey();
-            software.amazon.awssdk.services.sqs.model.MessageAttributeValue sqsValue = entry.getValue();
-
-            // 변환된 SNS MessageAttributeValue를 생성
-            software.amazon.awssdk.services.sns.model.MessageAttributeValue snsValue = software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()
-                    .dataType(sqsValue.dataType())
-                    .stringValue(sqsValue.stringValue())
-                    .binaryValue(sqsValue.binaryValue())
-                    .build();
-
-            snsAttributes.put(key, snsValue);
-        }
-
-        return snsAttributes;
     }
 }

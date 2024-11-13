@@ -1,8 +1,10 @@
 package com.sparta.nugulpayment.payment.request.controller;
 
+import com.sparta.nugulpayment.config.SQSProtocol;
 import com.sparta.nugulpayment.payment.dto.response.PreprocessResponse;
 import com.sparta.nugulpayment.payment.request.dto.saveRequest.SaveRequestRequest;
 import com.sparta.nugulpayment.payment.request.service.RequestService;
+import com.sparta.nugulpayment.payment.sqs.dto.SQSApprovePayment;
 import com.sparta.nugulpayment.sns.service.SnsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -35,15 +37,13 @@ public class RequestController {
     @ResponseBody
     @PostMapping("/test")
     public ResponseEntity<?> test() throws Exception {
-        Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
-        messageAttributes.put("type", MessageAttributeValue.builder()
-                .dataType("String")
-                .stringValue("initRequest").build());
-        messageAttributes.put("amount", MessageAttributeValue.builder()
-                .dataType("Number")
-                .stringValue(String.valueOf(new Random().nextInt())).build());
+        SQSApprovePayment sqsApprovePayment = new SQSApprovePayment(SQSProtocol.TYPE_APPROVE_PAYMENT,
+                1L,
+                "PaymentKey",
+                "OrderId",
+                1L);
 
-        PublishResponse rp = snsService.publishToPaymentTopic(messageAttributes);
+        PublishResponse rp = snsService.publishToPaymentTopic(sqsApprovePayment.toSNSAttributes());
         System.out.println(rp.messageId());
 
         return ResponseEntity.ok().body(rp.messageId());

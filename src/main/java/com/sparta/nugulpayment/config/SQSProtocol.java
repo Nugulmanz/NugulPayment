@@ -12,8 +12,8 @@ public class SQSProtocol {
 
     public static final String ATTRIBUTE_NAME_MESSAGE = "message";
 
-    public static String TYPE_PRE_ORDER = "PRE_ORDER";
-    public static String TYPE_APPROVE_PAYMENT = "APPROVE_PAYMENT";
-    public static String TYPE_SUCCESS_PAYMENT = "SUCCESS_PAYMENT";
-    public static String TYPE_CANCEL_PAYMENT = "CANCEL_PAYMENT";
+    public static final String TYPE_PRE_ORDER = "PRE_ORDER";
+    public static final String TYPE_APPROVE_PAYMENT = "APPROVE_PAYMENT";
+    public static final String TYPE_SUCCESS_PAYMENT = "SUCCESS_PAYMENT";
+    public static final String TYPE_CANCEL_PAYMENT = "CANCEL_PAYMENT";
 }

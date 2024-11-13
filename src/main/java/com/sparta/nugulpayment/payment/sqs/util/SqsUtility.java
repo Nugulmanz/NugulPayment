@@ -1,16 +1,23 @@
 package com.sparta.nugulpayment.payment.sqs.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.nugulpayment.config.SQSProtocol;
+import org.antlr.v4.runtime.misc.DoubleKeyMap;
+import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Component
 public class SqsUtility {
     /**
      * Queue에서 Message를 삭제 하는 메서드
@@ -37,6 +44,24 @@ public class SqsUtility {
         return result.get();
     }
 
+    public Map<String, MessageAttributeValue> parseMessage(Message message) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, MessageAttributeValue> result = new HashMap<>();
+
+        JsonNode jsonNode = mapper.readTree(message.body());
+        JsonNode data = jsonNode.get("MessageAttributes");
+        for (Iterator<String> it = data.fieldNames(); it.hasNext(); ) {
+            String f = it.next();
+            MessageAttributeValue attributeValue = MessageAttributeValue.builder()
+                    .stringValue(data.get(f).get("Value").asText())
+                    .dataType(data.get(f).get("Type").asText())
+                    .build();
+
+            result.put(f, attributeValue);
+        }
+
+        return result;
+    }
     public String getType(Map<String, MessageAttributeValue> sqsAttributes) {
         return sqsAttributes.get(SQSProtocol.ATTRIBUTE_NAME_TYPE).stringValue();
     }

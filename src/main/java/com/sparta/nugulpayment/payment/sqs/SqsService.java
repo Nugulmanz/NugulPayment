@@ -1,19 +1,29 @@
 package com.sparta.nugulpayment.payment.sqs;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.nugulpayment.config.AwsSqsConfig;
+import com.sparta.nugulpayment.config.SQSProtocol;
 import com.sparta.nugulpayment.payment.request.service.RequestService;
+import com.sparta.nugulpayment.payment.sqs.dto.SQSApprovePayment;
+import com.sparta.nugulpayment.payment.sqs.dto.SQSPreOrder;
+import com.sparta.nugulpayment.payment.sqs.util.SqsUtility;
 import com.sparta.nugulpayment.payment.test.TestDto;
 import com.sparta.nugulpayment.payment.toss.TossService;
 import com.sparta.nugulpayment.sns.service.SnsService;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import lombok.RequiredArgsConstructor;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
+import java.io.DataInput;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -26,6 +36,7 @@ public class SqsService {
     private final String INIT_REQUEST = "initRequest";
     private final String CONFIRM_REQUEST = "confirmRequest";
     private final SnsService snsService;
+    private final SqsUtility sqsUtility;
 
     /**
      * 주문과 관련된 정보 전달(type=initRequest : 최초 결제 요청 데이터 저장
@@ -38,12 +49,24 @@ public class SqsService {
     @SqsListener(value = "${cloud.aws.sqs.queue.name}")
     public void receiveMessage(Message message) throws Exception {
         System.out.println(message);
+        Map<String ,MessageAttributeValue> messageAttribute = sqsUtility.parseMessage(message);
 
-        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        TestDto testDto = mapper.readValue(message.body(), TestDto.class);
 
-        Map<String, software.amazon.awssdk.services.sqs.model.MessageAttributeValue> messageAttribute = message.messageAttributes();
+        final String type = sqsUtility.getType(messageAttribute);
 
+        switch (type) {
+            case SQSProtocol.TYPE_APPROVE_PAYMENT :
+                SQSApprovePayment approvePaymentDto = new SQSApprovePayment();
+                approvePaymentDto.fromSQSAttributes(messageAttribute);
+
+                String paymentKey = approvePaymentDto.getPaymentKey();
+                break;
+
+            case SQSProtocol.TYPE_PRE_ORDER:
+                SQSPreOrder preOrderDto = new SQSPreOrder();
+                preOrderDto.fromSQSAttributes(messageAttribute);
+                break;
+        }
 //        switch (sqsDto.getType()) {
 //            case INIT_REQUEST : // 주문과 관련된 정보 전달
 //                System.out.println("Received initRequest");
@@ -107,12 +130,12 @@ public class SqsService {
         return;
     }
 
-    public static Map<String, software.amazon.awssdk.services.sns.model.MessageAttributeValue> convertSqsAttributesToSnsAttributes(Map<String, software.amazon.awssdk.services.sqs.model.MessageAttributeValue> sqsAttributes) {
+    public static Map<String, software.amazon.awssdk.services.sns.model.MessageAttributeValue> convertSqsAttributesToSnsAttributes(Map<String, MessageAttributeValue> sqsAttributes) {
         Map<String, software.amazon.awssdk.services.sns.model.MessageAttributeValue> snsAttributes = new HashMap<>();
 
-        for (Map.Entry<String, software.amazon.awssdk.services.sqs.model.MessageAttributeValue> entry : sqsAttributes.entrySet()) {
+        for (Map.Entry<String, MessageAttributeValue> entry : sqsAttributes.entrySet()) {
             String key = entry.getKey();
-            software.amazon.awssdk.services.sqs.model.MessageAttributeValue sqsValue = entry.getValue();
+            MessageAttributeValue sqsValue = entry.getValue();
 
             // 변환된 SNS MessageAttributeValue를 생성
             software.amazon.awssdk.services.sns.model.MessageAttributeValue snsValue = software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()

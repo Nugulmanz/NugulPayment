@@ -41,7 +41,7 @@ public class SQSApprovePayment implements SQSDto {
 
         attributes.put(SQSProtocol.ATTRIBUTE_NAME_TYPE, software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()
                 .dataType("String")
-                .stringValue(SQSProtocol.TYPE_PRE_ORDER)
+                .stringValue(SQSProtocol.TYPE_APPROVE_PAYMENT)
                 .build());
 
         attributes.put(SQSProtocol.ATTRIBUTE_NAME_PAYMENT_KEY, software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()

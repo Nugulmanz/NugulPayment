@@ -26,6 +26,14 @@ cloud:
         name: NugulPayments.fifo
         url: ${SQS_PAYMENTS_URL}
 
+    sns:
+      ticket:
+        topic:
+          arn: ${SNS_TICKET_TOPIC}
+      payment:
+        topic:
+          arn: ${SNS_PAYMENT_TOPIC}
+
 toss:
   key:
     secret-key: ${TOSS_SECRET_KEY}

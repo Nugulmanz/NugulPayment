@@ -22,6 +22,9 @@ public class AwsSqsConfig {
     @Value("${cloud.aws.region.static}")
     private String awsRegion;
 
+    @Value("${cloud.aws.sqs.queue.url}")
+    private String sqsQueueUrl;
+
     /**
      * AWS SQS 서비스와 비동기 적으로 통신하는 클라이언트 생성
      * @return SQS서비스와 통신하는 클라이언트 객체

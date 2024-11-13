@@ -32,7 +32,7 @@ public class SQSFailPayment implements SQSDto {
 
         attributes.put(SQSProtocol.ATTRIBUTE_NAME_TYPE, software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()
                 .dataType("String")
-                .stringValue(SQSProtocol.TYPE_SUCCESS_PAYMENT)
+                .stringValue(SQSProtocol.TYPE_CANCEL_PAYMENT)
                 .build());
 
         attributes.put(SQSProtocol.ATTRIBUTE_NAME_TICKET_ID, software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()

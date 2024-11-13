@@ -21,6 +21,7 @@ public class SQSApprovePayment implements SQSDto {
     private String paymentKey;
     private String orderId;
     private long userId;
+    private long amount;
     private int tryCount;
 
     @Override
@@ -30,6 +31,7 @@ public class SQSApprovePayment implements SQSDto {
         paymentKey = attributes.get(SQSProtocol.ATTRIBUTE_NAME_PAYMENT_KEY).stringValue();
         orderId = attributes.get(SQSProtocol.ATTRIBUTE_NAME_ORDER_ID).stringValue();
         userId = Long.parseLong(attributes.get(SQSProtocol.ATTRIBUTE_NAME_USER_ID).stringValue());
+        amount = Long.parseLong(attributes.get(SQSProtocol.ATTRIBUTE_NAME_AMOUNT).stringValue());
         tryCount = Integer.parseInt(attributes.get(SQSProtocol.ATTRIBUTE_TRY_COUNT).stringValue());
     }
 
@@ -40,6 +42,11 @@ public class SQSApprovePayment implements SQSDto {
         attributes.put(SQSProtocol.ATTRIBUTE_NAME_TICKET_ID, software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()
                 .dataType("Number")
                 .stringValue(String.valueOf(ticketId))
+                .build());
+
+        attributes.put(SQSProtocol.ATTRIBUTE_NAME_AMOUNT, software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()
+                .dataType("Number")
+                .stringValue(String.valueOf(amount))
                 .build());
 
         attributes.put(SQSProtocol.ATTRIBUTE_NAME_TYPE, software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()

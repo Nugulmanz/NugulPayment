@@ -38,15 +38,25 @@ public class TossUtil {
             os.write(requestData.toString().getBytes(StandardCharsets.UTF_8));
         }
 
-        try (InputStream responseStream = connection.getResponseCode() == 200 ? connection.getInputStream() : connection.getErrorStream();
+        try (InputStream responseStream = connect(connection); // 1차 요청
              Reader reader = new InputStreamReader(responseStream, StandardCharsets.UTF_8)) {
             return (JSONObject) new JSONParser().parse(reader);
         } catch (Exception e) {
-            logger.error("Error reading response", e);
-            JSONObject errorResponse = new JSONObject();
-            errorResponse.put("error", "Error reading response");
-            return errorResponse;
+            try (InputStream responseStream = connect(connection); // 2차 요청
+                 Reader reader = new InputStreamReader(responseStream, StandardCharsets.UTF_8)) {
+                return (JSONObject) new JSONParser().parse(reader);
+            }
+            catch (Exception e2){
+                logger.error("Error reading response", e2);
+                JSONObject errorResponse = new JSONObject();
+                errorResponse.put("error", "Error reading response");
+                return errorResponse;
+            }
         }
+    }
+    private InputStream connect(HttpURLConnection connection) throws IOException {
+        InputStream responseStream = connection.getResponseCode() == 200 ? connection.getInputStream() : connection.getErrorStream();
+        return responseStream;
     }
 
     private HttpURLConnection createConnection(String secretKey, String urlString) throws IOException {
@@ -56,6 +66,7 @@ public class TossUtil {
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
+        connection.setConnectTimeout(3000); // 3초 동안만 연결 유지
         return connection;
     }
 

@@ -14,12 +14,14 @@ import java.util.Map;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+// 결제 승인 요청 Dto
 public class SQSApprovePayment implements SQSDto {
     private String type;
     private long ticketId;
     private String paymentKey;
     private String orderId;
     private long userId;
+    private int tryCount;
 
     @Override
     public void fromSQSAttributes(Map<String, MessageAttributeValue> attributes) {
@@ -28,6 +30,7 @@ public class SQSApprovePayment implements SQSDto {
         paymentKey = attributes.get(SQSProtocol.ATTRIBUTE_NAME_PAYMENT_KEY).stringValue();
         orderId = attributes.get(SQSProtocol.ATTRIBUTE_NAME_ORDER_ID).stringValue();
         userId = Long.parseLong(attributes.get(SQSProtocol.ATTRIBUTE_NAME_USER_ID).stringValue());
+        tryCount = Integer.parseInt(attributes.get(SQSProtocol.ATTRIBUTE_TRY_COUNT).stringValue());
     }
 
     @Override
@@ -57,6 +60,11 @@ public class SQSApprovePayment implements SQSDto {
         attributes.put(SQSProtocol.ATTRIBUTE_NAME_USER_ID, software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()
                 .dataType("Number")
                 .stringValue(String.valueOf(userId))
+                .build());
+
+        attributes.put(SQSProtocol.ATTRIBUTE_TRY_COUNT, software.amazon.awssdk.services.sns.model.MessageAttributeValue.builder()
+                .dataType("Number")
+                .stringValue(String.valueOf(tryCount))
                 .build());
 
         return attributes;

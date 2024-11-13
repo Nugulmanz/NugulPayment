@@ -1,34 +1,16 @@
 package com.sparta.nugulpayment.payment.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sparta.nugulpayment.payment.dto.request.PostProcessRequest;
-import com.sparta.nugulpayment.payment.dto.request.PreprocessRequest;
-import com.sparta.nugulpayment.payment.dto.response.PostProcessResponse;
-import com.sparta.nugulpayment.payment.dto.response.PreprocessResponse;
 import com.sparta.nugulpayment.payment.request.service.RequestService;
 import com.sparta.nugulpayment.payment.result.service.ResultService;
 import com.sparta.nugulpayment.payment.toss.TossService;
-import com.sparta.nugulpayment.payment.transfer.service.TransferService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequiredArgsConstructor
@@ -45,7 +27,7 @@ public class PaymentController {
         requestService.check(postProcessRequest);
         resultService.save(postProcessRequest);
 
-        JSONObject response = tossService.requestPayment(request, postProcessRequest);
+        JSONObject response = tossService.requestPayment( postProcessRequest);
         int statusCode = response.containsKey("error") ? 400 : 200;
 
         return ResponseEntity.status(statusCode).body(response);

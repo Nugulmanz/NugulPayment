@@ -20,4 +20,9 @@ public class Request extends Timestamped {
         this.orderId = reqDto.getOrderId();
         this.amount = reqDto.getAmount();
     }
+
+    public Request(String orderId, long amount) {
+        this.orderId = orderId;
+        this.amount = amount;
+    }
 }

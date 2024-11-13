@@ -1,8 +1,8 @@
 package com.sparta.nugulpayment.payment.common;
 
-import org.json.simple.parser.ParseException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -18,12 +18,12 @@ import java.util.Base64;
 public class TossUtil {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public JSONObject requestPaymentConfirm(String jsonString, String secretKey) throws Exception{
+    public JSONObject requestPaymentConfirm(String jsonString, String secretKey) throws Exception {
         JSONObject response = sendRequest(parseRequestData(jsonString), secretKey, "https://api.tosspayments.com/v1/payments/confirm");
         return response;
     }
 
-        private JSONObject parseRequestData(String jsonBody) {
+    private JSONObject parseRequestData(String jsonBody) {
         try {
             return (JSONObject) new JSONParser().parse(jsonBody);
         } catch (ParseException e) {

@@ -26,4 +26,10 @@ public class RequestService {
                 .orElseThrow(()-> new NullPointerException("없어요"));
 
     }
+
+    @Transactional
+    public void saveInitRequest(String orderId, int amount) {
+        Request request = new Request(orderId, amount);
+        requestRepository.save(request);
+    }
 }

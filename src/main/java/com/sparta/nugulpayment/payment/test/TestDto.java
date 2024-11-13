@@ -1,12 +1,19 @@
 package com.sparta.nugulpayment.payment.test;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 
 import java.util.Map;
 
 @Getter
+@JsonSerialize
 public class TestDto {
-    private String type;
-    private Object object;
-    private Map<String, Object> data;  // data를 Map으로 설정
+    String Type;
+    String MessageId;
+    String SequenceNumber;
+    String TopicArn;
+    String Subject;
+    String Message;
+    String Timestamp;
+    String UnsubscribeURL;
 }

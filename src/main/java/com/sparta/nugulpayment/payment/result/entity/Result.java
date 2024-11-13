@@ -18,13 +18,20 @@ public class Result extends Timestamped {
     private Long result_id;
     private String orderId;
     private String paymentKey;
-    private Long user_id;
+    private Long userId;
     private int amount;
 
     public Result(PostProcessRequest postProcessRequest){
         this.orderId = postProcessRequest.getOrderId();
         this.paymentKey = postProcessRequest.getPaymentKey();
-        this.user_id = postProcessRequest.getUserId();
+        this.userId = postProcessRequest.getUserId();
         this.amount = postProcessRequest.getAmount();
+    }
+
+    public Result(String orderId, String paymentKey, Long userId, int amount){
+        this.orderId = orderId;
+        this.paymentKey = paymentKey;
+        this.userId = userId;
+        this.amount = amount;
     }
 }

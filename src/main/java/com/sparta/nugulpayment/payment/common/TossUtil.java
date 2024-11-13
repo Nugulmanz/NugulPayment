@@ -49,7 +49,7 @@ public class TossUtil {
             catch (Exception e2){
                 logger.error("Error reading response", e2);
                 JSONObject errorResponse = new JSONObject();
-                errorResponse.put("error", "Error reading response");
+                errorResponse.put("timeOut", "Error reading response");
                 return errorResponse;
             }
         }

@@ -41,7 +41,7 @@ public class RequestController {
                 1L,
                 "PaymentKey",
                 "OrderId",
-                1L);
+                1L,0, 1);
 
         PublishResponse rp = snsService.publishToPaymentTopic(sqsApprovePayment.toSNSAttributes());
         System.out.println(rp.messageId());

@@ -16,6 +16,12 @@ public class RequestService {
     private final RequestRepository requestRepository;
 
     @Transactional
+    public void postRequest(String orderId, long amount) {
+        Request request = new Request(orderId, amount);
+        requestRepository.save(request);
+    }
+
+    @Transactional
     public void saveRequest(SaveRequestRequest reqDto) {
         Request request = new Request(reqDto);
         requestRepository.save(request);

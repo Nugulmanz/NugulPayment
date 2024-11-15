@@ -70,7 +70,13 @@ jobs:
         with:
           name: application-jar    # build Job에서 저장한 아티팩트를 다운로드
 
-      # 3. AWS 자격 증명 구성
+      # 3. JAR 파일을 Docker 빌드 컨텍스트 내 특정 경로로 이동
+      - name: Move JAR to build/libs directory
+        run: |
+          mkdir -p build/libs
+          mv nugul-payment-0.0.1-SNAPSHOT.jar build/libs/
+
+      # 4. AWS 자격 증명 구성
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -78,7 +84,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}                      # AWS 리전
           role-session-name: DockerImageBuildSession  # 세션 이름
 
-      # 4. Amazon ECR에 로그인
+      # 5. Amazon ECR에 로그인
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
@@ -86,7 +92,7 @@ jobs:
           mask-password: true  # Docker 비밀번호 마스킹 활성화
         # ECR에 로그인하여 Docker 이미지 푸시 권한 획득
 
-      # 5. Docker 이미지 빌드 및 ECR로 푸시
+      # 6. Docker 이미지 빌드 및 ECR로 푸시
       - name: Build and push Docker image
         id: build-image
         run: |

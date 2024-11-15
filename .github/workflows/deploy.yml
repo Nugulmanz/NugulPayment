@@ -1,0 +1,145 @@
+name: Deploy to Amazon ECS
+
+# main 브랜치에 커밋이 푸시될 때 워크플로우 실행
+on:
+  push:
+    branches: [ "main" ]
+
+# 공통으로 사용되는 전역 환경 변수
+env:
+  AWS_REGION: ap-northeast-2                          # AWS 리전 (서울 리전)
+  ECR_REPOSITORY: nugul-payment                      # ECR 저장소 이름
+  ECS_CLUSTER: nugul-payment-cluster                 # ECS 클러스터 이름
+  ECS_SERVICE: payment-server-service                # ECS 서비스 이름
+  ECS_TASK_DEFINITION: deploy/task-definition.json   # ECS 작업 정의 JSON 파일 경로
+  CONTAINER_NAME: payment-server-container           # 컨테이너 이름 (task-definition.json에 정의된 이름)
+
+permissions:
+  contents: read  # 레포지토리 콘텐츠 읽기 권한 부여
+
+jobs:
+  build:
+    name: Build JAR
+    runs-on: ubuntu-latest  # Ubuntu 최신 환경에서 Job 실행
+    steps:
+      # 1. Java 17 설치
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'   # Java 17 사용
+          distribution: 'temurin'  # OpenJDK Temurin 배포판 사용
+
+      # 2. 코드 체크아웃
+      - name: Check out code
+        uses: actions/checkout@v4
+        # 깃허브 레포지토리의 코드를 현재 워크플로우 환경에 다운로드
+
+      # 3. gradlew 파일에 실행 권한 부여
+      - name: Grant execute permission to gradlew
+        run: chmod +x ./gradlew
+        # Gradle Wrapper 파일이 실행될 수 있도록 권한 부여
+
+      # 4. Gradle 빌드 (테스트 생략)
+      - name: Build JAR without tests
+        run: |
+          ./gradlew clean build -x test
+          # clean: 이전 빌드 아티팩트를 제거
+          # build: 프로젝트 빌드 (JAR 생성)
+          # -x test: 테스트 단계 생략
+
+      # 5. 빌드된 JAR 파일을 아티팩트로 저장
+      - name: Save JAR artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: application-jar     # 저장된 아티팩트의 이름
+          path: build/libs/*.jar    # 빌드 결과 JAR 파일의 경로
+
+  docker:
+    name: Build and Push Docker Image
+    needs: build  # 이전 build Job이 성공해야 실행됨
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 이전 Job에서 생성한 JAR 파일 다운로드
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: application-jar    # build Job에서 저장한 아티팩트를 다운로드
+
+      # 2. Amazon ECR에 로그인
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        # ECR에 로그인하여 Docker 이미지 푸시 권한 획득
+
+      # 3. Docker 이미지 빌드 및 ECR로 푸시
+      - name: Build and push Docker image
+        id: build-image
+        run: |
+          IMAGE_TAG=${{ github.sha }}  # GitHub 커밋 SHA를 Docker 이미지 태그로 사용
+          docker build --build-arg SPRING_PROFILES_ACTIVE=prod \
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG .
+          # Docker 이미지 빌드:
+          # - SPRING_PROFILES_ACTIVE=prod 전달하여 Spring Boot 배포용 프로파일 활성화
+          # - 이미지 태그: 커밋 SHA 사용
+          docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+          # Docker 이미지 ECR로 푸시
+          echo "image=$IMAGE_TAG" >> $GITHUB_ENV
+          # 이후 Job에서 사용할 이미지 태그를 환경 변수로 저장
+
+  deploy:
+    name: Deploy to ECS
+    needs: docker  # 이전 docker Job이 성공해야 실행됨
+    runs-on: ubuntu-latest
+    steps:
+      # 1. AWS 자격 증명 구성
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE }}  # AWS IAM Role ARN
+          aws-region: ${{ env.AWS_REGION }}                      # AWS 리전
+
+      # 2. ECS Task Definition 업데이트
+      - name: Update ECS task definition
+        id: update-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}  # 기존 Task Definition JSON 파일 경로
+          container-name: ${{ env.CONTAINER_NAME }}        # Task Definition에 정의된 컨테이너 이름
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.image }}
+          # Docker 이미지 경로 업데이트
+          overrides: |  # Task Definition의 특정 필드를 Secrets 값으로 대체
+            [
+              {
+                "name": "taskDefinitionArn",
+                "value": "${{ secrets.TASK_DEFINITION_ARN }}"
+              },
+              {
+                "name": "taskRoleArn",
+                "value": "${{ secrets.TASK_ROLE_ARN }}"
+              },
+              {
+                "name": "executionRoleArn",
+                "value": "${{ secrets.EXECUTION_ROLE_ARN }}"
+              }
+            ]
+          environment-variables: |  # 컨테이너 환경 변수 설정
+            PROD_DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}
+            PROD_DB_URL=${{ secrets.PROD_DB_URL }}
+            PROD_DB_USERNAME=${{ secrets.PROD_DB_USERNAME }}
+            SNS_PAYMENT_TOPIC=${{ secrets.SNS_PAYMENT_TOPIC }}
+            SNS_TICKET_TOPIC=${{ secrets.SNS_TICKET_TOPIC }}
+            SQS_ACCESS_KEY=${{ secrets.SQS_ACCESS_KEY }}
+            SQS_PAYMENTS_URL=${{ secrets.SQS_PAYMENTS_URL }}
+            SQS_REGION=${{ secrets.SQS_REGION }}
+            SQS_SECRET_KEY=${{ secrets.SQS_SECRET_KEY }}
+            SQS_TICKETS_URL=${{ secrets.SQS_TICKETS_URL }}
+            TOSS_SECRET_KEY=${{ secrets.TOSS_SECRET_KEY }}
+
+      # 3. ECS 서비스에 Task Definition 배포
+      - name: Deploy ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.update-task-def.outputs.task-definition }}  # 업데이트된 Task Definition
+          cluster: ${{ env.ECS_CLUSTER }}                                       # ECS 클러스터 이름
+          service: ${{ env.ECS_SERVICE }}                                       # ECS 서비스 이름
+          wait-for-service-stability: true                                      # 서비스 안정성 확인

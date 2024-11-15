@@ -15,7 +15,8 @@ env:
   CONTAINER_NAME: payment-server-container           # 컨테이너 이름 (task-definition.json에 정의된 이름)
 
 permissions:
-  contents: read  # 레포지토리 콘텐츠 읽기 권한 부여
+  contents: read        # 레포지토리 콘텐츠 읽기 권한
+  id-token: write       # OIDC 토큰 생성 권한
 
 jobs:
   build:
@@ -39,7 +40,7 @@ jobs:
         run: chmod +x ./gradlew
         # Gradle Wrapper 파일이 실행될 수 있도록 권한 부여
 
-      # 4. Gradle 빌드 (테스트 생략)
+      # 4. Gradle 빌드
       - name: Build JAR without tests
         run: |
           ./gradlew clean build -x test
@@ -59,28 +60,47 @@ jobs:
     needs: build  # 이전 build Job이 성공해야 실행됨
     runs-on: ubuntu-latest
     steps:
-      # 1. 이전 Job에서 생성한 JAR 파일 다운로드
+      # 1. 코드 체크아웃
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # 2. 이전 Job에서 생성한 JAR 파일 다운로드
       - name: Download JAR artifact
         uses: actions/download-artifact@v3
         with:
           name: application-jar    # build Job에서 저장한 아티팩트를 다운로드
 
-      # 2. Amazon ECR에 로그인
+      # 3. JAR 파일을 Docker 빌드 컨텍스트 내 특정 경로로 이동
+      - name: Move JAR to build/libs directory
+        run: |
+          mkdir -p build/libs
+          mv nugul-payment-0.0.1-SNAPSHOT.jar build/libs/
+
+      # 4. AWS 자격 증명 구성
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE }}  # AWS IAM Role ARN
+          aws-region: ${{ env.AWS_REGION }}                      # AWS 리전
+          role-session-name: DockerImageBuildSession  # 세션 이름
+
+      # 5. Amazon ECR에 로그인
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: true  # Docker 비밀번호 마스킹 활성화
         # ECR에 로그인하여 Docker 이미지 푸시 권한 획득
 
-      # 3. Docker 이미지 빌드 및 ECR로 푸시
+      # 6. Docker 이미지 빌드 및 ECR로 푸시
       - name: Build and push Docker image
         id: build-image
         run: |
-          IMAGE_TAG=${{ github.sha }}  # GitHub 커밋 SHA를 Docker 이미지 태그로 사용
+          IMAGE_TAG=${{ github.run_number }}  # GitHub Actions 실행 번호를 Docker 이미지 태그로 사용
           docker build --build-arg SPRING_PROFILES_ACTIVE=prod \
             -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG .
           # Docker 이미지 빌드:
           # - SPRING_PROFILES_ACTIVE=prod 전달하여 Spring Boot 배포용 프로파일 활성화
-          # - 이미지 태그: 커밋 SHA 사용
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
           # Docker 이미지 ECR로 푸시
           echo "image=$IMAGE_TAG" >> $GITHUB_ENV
@@ -91,37 +111,33 @@ jobs:
     needs: docker  # 이전 docker Job이 성공해야 실행됨
     runs-on: ubuntu-latest
     steps:
-      # 1. AWS 자격 증명 구성
+      # 1. 코드 체크아웃
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # 2. AWS 자격 증명 구성
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE }}  # AWS IAM Role ARN
           aws-region: ${{ env.AWS_REGION }}                      # AWS 리전
+          role-session-name: ECSDeploySession  # 세션 이름
 
-      # 2. ECS Task Definition 업데이트
+      # 3. JSON 파일 내 특정 필드 대체
+      - name: Replace placeholders in task-definition.json
+        run: |
+          sed -i "s|{TASK_ROLE_ARN}|${{ secrets.TASK_ROLE_ARN }}|g" ${{ env.ECS_TASK_DEFINITION }}
+          sed -i "s|{EXECUTION_ROLE_ARN}|${{ secrets.EXECUTION_ROLE_ARN }}|g" ${{ env.ECS_TASK_DEFINITION }}
+          sed -i "s|{IMAGE_URL}|${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.run_number }}|g" ${{ env.ECS_TASK_DEFINITION }}
+
+      # 4. ECS Task Definition 업데이트
       - name: Update ECS task definition
         id: update-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ env.ECS_TASK_DEFINITION }}  # 기존 Task Definition JSON 파일 경로
           container-name: ${{ env.CONTAINER_NAME }}        # Task Definition에 정의된 컨테이너 이름
-          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.image }}
-          # Docker 이미지 경로 업데이트
-          overrides: |  # Task Definition의 특정 필드를 Secrets 값으로 대체
-            [
-              {
-                "name": "taskDefinitionArn",
-                "value": "${{ secrets.TASK_DEFINITION_ARN }}"
-              },
-              {
-                "name": "taskRoleArn",
-                "value": "${{ secrets.TASK_ROLE_ARN }}"
-              },
-              {
-                "name": "executionRoleArn",
-                "value": "${{ secrets.EXECUTION_ROLE_ARN }}"
-              }
-            ]
+          image: ${{ secrets.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ github.run_number }}
           environment-variables: |  # 컨테이너 환경 변수 설정
             PROD_DB_PASSWORD=${{ secrets.PROD_DB_PASSWORD }}
             PROD_DB_URL=${{ secrets.PROD_DB_URL }}
@@ -135,7 +151,7 @@ jobs:
             SQS_TICKETS_URL=${{ secrets.SQS_TICKETS_URL }}
             TOSS_SECRET_KEY=${{ secrets.TOSS_SECRET_KEY }}
 
-      # 3. ECS 서비스에 Task Definition 배포
+      # 5. ECS 서비스에 Task Definition 배포
       - name: Deploy ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:

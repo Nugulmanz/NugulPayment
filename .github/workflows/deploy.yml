@@ -15,7 +15,8 @@ env:
   CONTAINER_NAME: payment-server-container           # 컨테이너 이름 (task-definition.json에 정의된 이름)
 
 permissions:
-  contents: read  # 레포지토리 콘텐츠 읽기 권한 부여
+  contents: read        # 레포지토리 콘텐츠 읽기 권한
+  id-token: write       # OIDC 토큰 생성 권한
 
 jobs:
   build:
@@ -71,6 +72,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE }}  # AWS IAM Role ARN
           aws-region: ${{ env.AWS_REGION }}                      # AWS 리전
+          role-session-name: DockerImageBuildSession  # 세션 이름
 
       # 3. Amazon ECR에 로그인
       - name: Login to Amazon ECR
@@ -84,7 +86,7 @@ jobs:
       - name: Build and push Docker image
         id: build-image
         run: |
-          IMAGE_TAG=${{ github.sha }}  # GitHub 커밋 SHA를 Docker 이미지 태그로 사용
+          IMAGE_TAG=${{ github.run_number }}  # GitHub Actions 실행 번호를 Docker 이미지 태그로 사용
           docker build --build-arg SPRING_PROFILES_ACTIVE=prod \
             -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG .
           # Docker 이미지 빌드:
@@ -106,6 +108,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE }}  # AWS IAM Role ARN
           aws-region: ${{ env.AWS_REGION }}                      # AWS 리전
+          role-session-name: ECSDeploySession  # 세션 이름
 
       # 2. ECS Task Definition 업데이트
       - name: Update ECS task definition

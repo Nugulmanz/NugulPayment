@@ -65,13 +65,22 @@ jobs:
         with:
           name: application-jar    # build Job에서 저장한 아티팩트를 다운로드
 
-      # 2. Amazon ECR에 로그인
+      # 2. AWS 자격 증명 구성
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE }}  # AWS IAM Role ARN
+          aws-region: ${{ env.AWS_REGION }}                      # AWS 리전
+
+      # 3. Amazon ECR에 로그인
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: true  # Docker 비밀번호 마스킹 활성화
         # ECR에 로그인하여 Docker 이미지 푸시 권한 획득
 
-      # 3. Docker 이미지 빌드 및 ECR로 푸시
+      # 4. Docker 이미지 빌드 및 ECR로 푸시
       - name: Build and push Docker image
         id: build-image
         run: |

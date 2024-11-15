@@ -1,5 +1,4 @@
 {
-    "taskDefinitionArn": "{TASK_DEFINITION_ARN}",
     "containerDefinitions": [
         {
             "name": "payment-server-container",
@@ -68,10 +67,6 @@
                     "value": "{TOSS_SECRET_KEY}"
                 }
             ],
-            "environmentFiles": [],
-            "mountPoints": [],
-            "volumesFrom": [],
-            "ulimits": [],
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -81,56 +76,14 @@
                     "max-buffer-size": "25m",
                     "awslogs-region": "ap-northeast-2",
                     "awslogs-stream-prefix": "ecs"
-                },
-                "secretOptions": []
-            },
-            "systemControls": []
+                }
+            }
         }
     ],
     "family": "payment-server-task",
     "taskRoleArn": "{TASK_ROLE_ARN}",
     "executionRoleArn": "{EXECUTION_ROLE_ARN}",
     "networkMode": "awsvpc",
-    "revision": 7,
-    "volumes": [],
-    "status": "ACTIVE",
-    "requiresAttributes": [
-        {
-            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-        },
-        {
-            "name": "ecs.capability.execution-role-awslogs"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.ecr-auth"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.task-iam-role"
-        },
-        {
-            "name": "ecs.capability.execution-role-ecr-pull"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-        },
-        {
-            "name": "ecs.capability.task-eni"
-        },
-        {
-            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
-        }
-    ],
-    "placementConstraints": [],
-    "compatibilities": [
-        "EC2",
-        "FARGATE"
-    ],
     "requiresCompatibilities": [
         "FARGATE"
     ],
@@ -139,8 +92,5 @@
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
-    },
-    "registeredAt": "2024-11-14T05:09:30.300Z",
-    "registeredBy": "arn:aws:iam::122610500734:root",
-    "tags": []
+    }
 }

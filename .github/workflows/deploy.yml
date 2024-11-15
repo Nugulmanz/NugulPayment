@@ -94,6 +94,11 @@ jobs:
           mask-password: true  # Docker 비밀번호 마스킹 활성화
         # ECR에 로그인하여 Docker 이미지 푸시 권한 획득
 
+      # 디버깅
+      - name: Debug ECR Registry
+        run:
+          echo "ECR Registry: ${{ steps.login-ecr.outputs.registry }}"
+
       # 6. Docker 이미지 빌드 및 ECR로 푸시
       - name: Build and push Docker image
         id: build-image

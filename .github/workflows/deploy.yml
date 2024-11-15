@@ -40,7 +40,7 @@ jobs:
         run: chmod +x ./gradlew
         # Gradle Wrapper 파일이 실행될 수 있도록 권한 부여
 
-      # 4. Gradle 빌드 (테스트 생략)
+      # 4. Gradle 빌드
       - name: Build JAR without tests
         run: |
           ./gradlew clean build -x test
@@ -60,13 +60,17 @@ jobs:
     needs: build  # 이전 build Job이 성공해야 실행됨
     runs-on: ubuntu-latest
     steps:
-      # 1. 이전 Job에서 생성한 JAR 파일 다운로드
+      # 1. 코드 체크아웃
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # 2. 이전 Job에서 생성한 JAR 파일 다운로드
       - name: Download JAR artifact
         uses: actions/download-artifact@v3
         with:
           name: application-jar    # build Job에서 저장한 아티팩트를 다운로드
 
-      # 2. AWS 자격 증명 구성
+      # 3. AWS 자격 증명 구성
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -74,7 +78,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}                      # AWS 리전
           role-session-name: DockerImageBuildSession  # 세션 이름
 
-      # 3. Amazon ECR에 로그인
+      # 4. Amazon ECR에 로그인
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
@@ -82,23 +86,13 @@ jobs:
           mask-password: true  # Docker 비밀번호 마스킹 활성화
         # ECR에 로그인하여 Docker 이미지 푸시 권한 획득
 
-      # 디버깅1: Dockerfile 위치 확인
-      - name: List files in current directory
-        run: ls -la
-
-      # 디버깅2: 현재 디렉토리를 확인
-      - name: Print current directory
-        run: pwd
-
-      # 4. Docker 이미지 빌드 및 ECR로 푸시
+      # 5. Docker 이미지 빌드 및 ECR로 푸시
       - name: Build and push Docker image
         id: build-image
         run: |
           IMAGE_TAG=${{ github.run_number }}  # GitHub Actions 실행 번호를 Docker 이미지 태그로 사용
           docker build --build-arg SPRING_PROFILES_ACTIVE=prod \
-            -f /home/runner/work/NugulPayment/NugulPayment/Dockerfile \  # Dockerfile 경로 명시
-            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG \
-            /home/runner/work/NugulPayment/NugulPayment
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG .
           # Docker 이미지 빌드:
           # - SPRING_PROFILES_ACTIVE=prod 전달하여 Spring Boot 배포용 프로파일 활성화
           docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG

@@ -1,1 +1,3 @@
 rootProject.name = 'nugul-payment'
+
+includeBuild('../grpc-proto')

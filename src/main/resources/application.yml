@@ -41,3 +41,4 @@ toss:
 grpc:
   server:
     port: 50052
+    max-inbound-message-size: 104857600 # 100MB (단위: 바이트)

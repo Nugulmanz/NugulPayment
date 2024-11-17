@@ -1,4 +1,4 @@
-package com.sparta.nugulpayment.payment.result.controller;
+package com.sparta.nugulpayment.payment.result.Controller;
 
 import com.sparta.nugulpayment.payment.result.service.ResultService;
 import lombok.RequiredArgsConstructor;
@@ -15,16 +15,14 @@ import java.util.Map;
 public class ResultController {
     private final ResultService resultService;
 
-    // 결제 정보 반환 API
+    // 결제 정보 반환 REST API
     @PostMapping("/info/payment")
     public ResponseEntity<JSONObject> getPaymentInfo (@RequestBody Map<String, Object> body) {
-        // 요청에서 필요한 데이터 추출
-        String orderId = (String) body.get("orderId");
-        Integer amount = (Integer) body.get("amount");
-        Long userId = ((Number) body.get("userId")).longValue();
-
-        // 결과 정보 조회 서비스 호출
-        JSONObject paymentInfo = resultService.retrievePaymentInfo(orderId, amount, userId);
+        // 요청 처리
+        JSONObject paymentInfo = resultService.retrievePaymentInfo(
+                (String) body.get("orderId"),
+                ((Number) body.get("userId")).longValue()
+        );
 
         return ResponseEntity.ok(paymentInfo);
 

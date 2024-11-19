@@ -29,22 +29,20 @@ public class ResultService {
         resultRepository.save(result);
     }
 
-    // 결제 정보 반환 API
-    public JSONObject retrievePaymentInfo(String orderId, Integer amount, Long userId) {
-        Optional<Result> paymentResult = resultRepository.findByOrderId(orderId);
+    // 결제 정보 반환 REST API
+    public JSONObject retrievePaymentInfo(String orderId, Long userId) {
+        Result result = resultRepository.findByOrderIdAndUserId(orderId, userId);
 
-        if (paymentResult.isPresent()) {
-            Result result = paymentResult.get();
-
-            JSONObject paymentInfo = new JSONObject();
-            paymentInfo.put("orderId", result.getOrderId());
-            paymentInfo.put("amount", result.getAmount());
-            paymentInfo.put("userId", result.getUserId());
-
-            return paymentInfo;
-        } else {
-            throw new RuntimeException("해당 order Id의 결제 정보를 찾을 수 없습니다");
+        if (result == null) {
+            throw new RuntimeException(String.format("결제 정보를 찾을 수 없습니다."));
         }
-    }
 
+        JSONObject paymentInfo = new JSONObject();
+        paymentInfo.put("orderId", result.getOrderId());
+        paymentInfo.put("amount", result.getAmount());
+        paymentInfo.put("userId", result.getUserId());
+
+        return paymentInfo;
+
+    }
 }

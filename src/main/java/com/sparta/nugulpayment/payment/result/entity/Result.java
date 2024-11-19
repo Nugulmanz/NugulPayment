@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class Result extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long result_id;
+    private Long resultId;
     private String orderId;
     private String paymentKey;
     private Long userId;

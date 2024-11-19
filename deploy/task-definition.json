@@ -1,8 +1,5 @@
 {
-<<<<<<< HEAD
     "taskDefinitionArn": "{TASK_DEFINITION_ARN}",
-=======
->>>>>>> 1690ac27e6993ac45767d4bad714ac04d898e018
     "containerDefinitions": [
         {
             "name": "payment-server-container",
@@ -71,13 +68,10 @@
                     "value": "{TOSS_SECRET_KEY}"
                 }
             ],
-<<<<<<< HEAD
             "environmentFiles": [],
             "mountPoints": [],
             "volumesFrom": [],
             "ulimits": [],
-=======
->>>>>>> 1690ac27e6993ac45767d4bad714ac04d898e018
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
@@ -87,22 +81,16 @@
                     "max-buffer-size": "25m",
                     "awslogs-region": "ap-northeast-2",
                     "awslogs-stream-prefix": "ecs"
-<<<<<<< HEAD
                 },
                 "secretOptions": []
             },
             "systemControls": []
-=======
-                }
-            }
->>>>>>> 1690ac27e6993ac45767d4bad714ac04d898e018
         }
     ],
     "family": "payment-server-task",
     "taskRoleArn": "{TASK_ROLE_ARN}",
     "executionRoleArn": "{EXECUTION_ROLE_ARN}",
     "networkMode": "awsvpc",
-<<<<<<< HEAD
     "revision": 7,
     "volumes": [],
     "status": "ACTIVE",
@@ -143,8 +131,6 @@
         "EC2",
         "FARGATE"
     ],
-=======
->>>>>>> 1690ac27e6993ac45767d4bad714ac04d898e018
     "requiresCompatibilities": [
         "FARGATE"
     ],
@@ -153,12 +139,8 @@
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
         "operatingSystemFamily": "LINUX"
-<<<<<<< HEAD
     },
     "registeredAt": "2024-11-14T05:09:30.300Z",
     "registeredBy": "arn:aws:iam::122610500734:root",
     "tags": []
-=======
-    }
->>>>>>> 1690ac27e6993ac45767d4bad714ac04d898e018
 }

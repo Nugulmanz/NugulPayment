@@ -18,6 +18,13 @@ public class TossService {
 
     private final TossUtil tossUtil;
 
+    /**
+     * (비동기식) 토스 서버에 결제 승인 요청
+     *
+     * @param approvePayment : 결제 승인에 필요한 객체
+     * @return : 결제 승인 결과
+     * @throws Exception
+     */
     public JSONObject requestTossPayment(SQSApprovePayment approvePayment) throws Exception {
         // 위젯 키는 초기 결제를 생성해서 위젯이 직접 결제할 때 사용됩니다. 그래서 위젯 키는 없어도 될 것 같네요
 //        String secretKey = request.getRequestURI().contains("/confirm/payment") ? API_SECRET_KEY : WIDGET_SECRET_KEY;
@@ -27,8 +34,13 @@ public class TossService {
         return tossUtil.requestPaymentConfirm(jsonString, API_SECRET_KEY);
     }
 
-
-
+    /**
+     * (동기식) 토스 서버에 결제 승인 요청
+     *
+     * @param postProcessRequest : 결제 승인에 필요한 객체
+     * @return : 결제 승인 결과
+     * @throws Exception
+     */
     public JSONObject requestPayment(PostProcessRequest postProcessRequest) throws Exception {
         // 위젯 키는 초기 결제를 생성해서 위젯이 직접 결제할 때 사용됩니다. 그래서 위젯 키는 없어도 될 것 같네요
 //        String secretKey = request.getRequestURI().contains("/confirm/payment") ? API_SECRET_KEY : WIDGET_SECRET_KEY;

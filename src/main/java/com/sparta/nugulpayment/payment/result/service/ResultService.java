@@ -9,22 +9,30 @@ import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ResultService {
     private final ResultRepository resultRepository;
 
+    /**
+     * (비동기식) 결제 결과 저장 메서드
+     *
+     * @param approvePaymentDto : 결제 승인 요청 데이터 객체
+     */
     @Transactional
-    public void saveResult(SQSApprovePayment approvePaymentDto){
-        Result result = new Result(approvePaymentDto.getOrderId(), approvePaymentDto.getPaymentKey(), approvePaymentDto.getUserId(), (int)approvePaymentDto.getAmount());
+    public void saveResult(SQSApprovePayment approvePaymentDto) {
+        Result result = new Result(approvePaymentDto.getOrderId(), approvePaymentDto.getPaymentKey(), approvePaymentDto.getUserId(), (int) approvePaymentDto.getAmount());
         resultRepository.save(result);
     }
 
+    /**
+     * (동기식) 결제 결과 저장 메서드
+     *
+     * @param postProcessRequest : 결제 승인 요청 데이터 객체
+     */
     @Transactional
-    public void save(PostProcessRequest postProcessRequest){
+    public void save(PostProcessRequest postProcessRequest) {
         Result result = new Result(postProcessRequest);
         resultRepository.save(result);
     }

@@ -56,7 +56,7 @@ public class SqsService {
 //                // 토스 서버에서 거절한 경우의 데이터를 알면 이 경우를 만들 수 있을 것 같음
                 // int statusCode = response.containsKey("error") ? 400 : 200; 이거랑 비슷할 듯
                 if(resTossPayment.containsKey("error")){
-                    SQSFailPayment failPaymentDto = new SQSFailPayment(SQSProtocol.TYPE_CANCEL_PAYMENT, approvePaymentDto.getTicketId(), "잔액 부족");
+                    SQSFailPayment failPaymentDto = new SQSFailPayment(SQSProtocol.TYPE_CANCEL_PAYMENT, approvePaymentDto.getTicketId(), "Toss에서 넘어오는 에러코드 담기");
                     snsService.publishToTicketTopic(failPaymentDto.toSNSAttributes());
                 }else if(resTossPayment.containsKey("timeOut")){
                     // 결제 정보 조회 api 호출(구현 필요)

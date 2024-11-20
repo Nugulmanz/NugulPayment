@@ -15,7 +15,11 @@ public class PaymentServiceImpl extends PaymentServiceGrpc.PaymentServiceImplBas
 
     private final ResultRepository resultRepository;
 
-    // 데이터베이스에서 해당 결제 정보를 조회한 후, 조회한 데이터를 PaymentResponse로 반환
+    /**
+     * gRPC 틍신으로 티켓서버에서 받은 request로 조회한 결제정보 데이터를 반환하는 메서드
+     * @param request gRPC request로 받은 유저정보
+     * @param responseObserver 결제정보 반환
+     */
     @Override
     public void getPaymentInfo (PaymentRequest request, StreamObserver<PaymentResponse> responseObserver) {
         String orderId = request.getOrderId();

@@ -29,20 +29,4 @@ public class ResultService {
         resultRepository.save(result);
     }
 
-    // 결제 정보 반환 REST API
-    public JSONObject retrievePaymentInfo(String orderId, Long userId) {
-        Result result = resultRepository.findByOrderIdAndUserId(orderId, userId);
-
-        if (result == null) {
-            throw new RuntimeException(String.format("결제 정보를 찾을 수 없습니다."));
-        }
-
-        JSONObject paymentInfo = new JSONObject();
-        paymentInfo.put("orderId", result.getOrderId());
-        paymentInfo.put("amount", result.getAmount());
-        paymentInfo.put("userId", result.getUserId());
-
-        return paymentInfo;
-
-    }
 }

@@ -5,11 +5,8 @@ import com.sparta.nugulpayment.payment.result.entity.Result;
 import com.sparta.nugulpayment.payment.result.repository.ResultRepository;
 import com.sparta.nugulpayment.payment.sqs.dto.SQSApprovePayment;
 import lombok.RequiredArgsConstructor;
-import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
